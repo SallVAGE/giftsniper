@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Gift Sniper</title>
+<style>
+  html,body{margin:0;height:100%;background:#060c1a;color:#cfe0ff;font:15px/1.4 -apple-system,system-ui,Segoe UI,Roboto,sans-serif}
+  .wrap{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:24px;box-sizing:border-box}
+  .spin{width:38px;height:38px;border-radius:50%;border:3px solid rgba(59,130,246,.25);border-top-color:#3b82f6;animation:r .8s linear infinite}
+  @keyframes r{to{transform:rotate(360deg)}}
+  small{color:#7f93b8}
+</style>
+</head>
+<body>
+<div class="wrap" id="msg"><div class="spin"></div><div>Загрузка…</div></div>
+<script>
+// Загрузчик Gift Sniper. Само приложение лежит на сервере бота (адрес в параметре ?api=),
+// здесь мы забираем его с заголовком, который отключает страницу-предупреждение ngrok.
+(function () {
+  var ALLOWED = /\.(ngrok-free\.dev|ngrok-free\.app|ngrok\.dev|ngrok\.app|lhr\.life|trycloudflare\.com)$/i;
+  function fail(text) {
+    document.getElementById('msg').innerHTML = '⚠️ ' + text + '<br><small>Закройте приложение и откройте его заново из бота</small>';
+  }
+  var api;
+  try { api = new URL(new URLSearchParams(location.search).get('api') || ''); } catch (e) { return fail('Нет адреса сервера'); }
+  if (api.protocol !== 'https:' || !ALLOWED.test(api.hostname)) return fail('Неверный адрес сервера');
+  var base = api.origin + '/';
+  fetch(base, { headers: { 'ngrok-skip-browser-warning': '1' }, cache: 'no-store' })
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+    .then(function (html) {
+      if (html.indexOf('Gift Sniper') < 0) throw new Error('сервер ответил не тем');
+      html = html.replace(/<head([^>]*)>/i, '<head$1><base href="' + base + '">');
+      document.open(); document.write(html); document.close();
+    })
+    .catch(function (e) { fail('Сервер бота недоступен (' + e.message + ')'); });
+})();
+</script>
+</body>
+</html>
